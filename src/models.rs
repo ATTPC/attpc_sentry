@@ -8,8 +8,8 @@ pub struct MachineStatus {
     pub id: i32,
     pub disk: String,
     pub path: String,
-    pub dir_bytes: f64,   // GB
-    pub bytes_avail: f64, // GB
-    pub total_bytes: f64, // GB
+    pub dir_gb: f64,
+    pub avail_gb: f64,
+    pub total_gb: f64,
     pub n_files: i32,
 }

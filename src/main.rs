@@ -14,9 +14,6 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 use tokio::sync::mpsc::{channel, Sender};
 
-const DEFAULT_WATCH_DIR: &str = "/Volumes";
-const DEFAULT_DISK: &str = "Macintosh HD";
-
 #[tokio::main]
 async fn main() {
     let subscriber = tracing_subscriber::fmt()
@@ -29,22 +26,20 @@ async fn main() {
     tracing::subscriber::set_global_default(subscriber)
         .expect("Could not initialize the tracing system!");
 
-    let db_url = match dotenv() {
-        Ok(path) => {
-            tracing::info!("Loaded env file from {path:?}");
-            match env::var("DATABASE_URL") {
-                Ok(value) => value,
-                Err(e) => {
-                    tracing::error!("env file did not contain variable DATABASE_URL: {e}");
-                    return;
-                }
-            }
-        }
+    match dotenv() {
+        Ok(_) => (),
         Err(e) => {
             tracing::error!("Failed to load .env file: {e}");
             return;
         }
-    };
+    }
+
+    let db_url =
+        env::var("DATABASE_URL").expect(".env file does not contain a DATABASE_URL variable!");
+    let default_path =
+        env::var("DEFAULT_PATH").expect(".env file does not contain a DEFAULT_PATH variable!");
+    let default_disk =
+        env::var("DEFAULT_DISK").expect(".env file does not contain a DEFAULT_DISK variable!");
 
     tracing::info!("Initializing the database connection...");
     let manager = Manager::new(db_url, deadpool_diesel::Runtime::Tokio1);
@@ -71,8 +66,8 @@ async fn main() {
     let pool_copy = conn_pool.clone();
     let handle = tokio::task::spawn(async move {
         sentry::watch_directory(
-            &PathBuf::from(DEFAULT_WATCH_DIR),
-            DEFAULT_DISK,
+            &PathBuf::from(default_path),
+            &default_disk,
             sentry_rx,
             pool_copy,
         )

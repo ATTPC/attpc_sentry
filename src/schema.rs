@@ -5,9 +5,9 @@ diesel::table! {
         id -> Integer,
         disk -> Text,
         path -> Text,
-        dir_bytes -> Double,
-        bytes_avail -> Double,
-        total_bytes -> Double,
+        dir_gb -> Double,
+        avail_gb -> Double,
+        total_gb -> Double,
         n_files -> Integer,
     }
 }

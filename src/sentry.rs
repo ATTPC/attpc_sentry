@@ -141,9 +141,9 @@ fn check_directory(directory: &Path, disk_name: &str) -> Result<MachineStatus, W
         id: 1,
         disk: String::from(disk_name),
         path: String::from(directory.to_string_lossy()),
-        dir_bytes: (used_size as f64) * 1.0e-9,
-        bytes_avail: (avail_total as f64) * 1.0e-9,
-        total_bytes: (disk_total as f64) * 1.0e-9,
+        dir_gb: (used_size as f64) * 1.0e-9,
+        avail_gb: (avail_total as f64) * 1.0e-9,
+        total_gb: (disk_total as f64) * 1.0e-9,
         n_files,
     })
 }
@@ -166,9 +166,9 @@ pub async fn initialize_database_value(conn_pool: &Pool) -> Result<(), WatchErro
         id: 1,
         disk: String::from(""),
         path: String::from(""),
-        dir_bytes: 0.0,
-        total_bytes: 0.0,
-        bytes_avail: 0.0,
+        dir_gb: 0.0,
+        avail_gb: 0.0,
+        total_gb: 0.0,
         n_files: 1,
     };
 

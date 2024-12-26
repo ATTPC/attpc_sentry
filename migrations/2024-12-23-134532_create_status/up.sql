@@ -2,8 +2,8 @@ CREATE TABLE status (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     disk TEXT NOT NULL,
     path TEXT NOT NULL,
-    dir_bytes DOUBLE NOT NULL,
-    bytes_avail DOUBLE NOT NULL,
-    total_bytes DOUBLE NOT NULL,
+    dir_gb DOUBLE NOT NULL,
+    avail_gb DOUBLE NOT NULL,
+    total_gb DOUBLE NOT NULL,
     n_files INTEGER NOT NULL
 )

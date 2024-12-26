@@ -16,7 +16,7 @@ pub struct AppState {
 #[derive(Serialize, Deserialize)]
 pub struct DirectoryChange {
     disk: String,
-    directory: String,
+    path: String,
 }
 
 pub async fn get_status(
@@ -54,7 +54,7 @@ pub async fn set_directory(
 ) -> Result<(), (StatusCode, String)> {
     app.sentry_tx
         .send(Message::WatchNew(
-            PathBuf::from(directory.directory),
+            PathBuf::from(directory.path),
             directory.disk,
         ))
         .await
