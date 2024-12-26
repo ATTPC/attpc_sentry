@@ -1,10 +1,7 @@
-use super::models::DirectoryStatus;
+use super::models::MachineStatus;
 use deadpool_diesel::sqlite::Pool;
 use std::fs::read_dir;
-#[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
-#[cfg(windows)]
-use std::os::windows::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::time;
 use sysinfo::Disks;
@@ -16,15 +13,15 @@ const WAIT_TIME: u64 = 10;
 #[derive(Debug)]
 pub enum WatchError {
     ClosedChannel,
-    SendError(SendError<DirectoryStatus>),
+    SendError(SendError<MachineStatus>),
     NotDirectory(PathBuf),
     BadIO(std::io::Error),
     DatabasePoolFailed(deadpool_diesel::PoolError),
     DatabaseConnFailed(deadpool_diesel::InteractError),
 }
 
-impl From<SendError<DirectoryStatus>> for WatchError {
-    fn from(val: SendError<DirectoryStatus>) -> Self {
+impl From<SendError<MachineStatus>> for WatchError {
+    fn from(val: SendError<MachineStatus>) -> Self {
         Self::SendError(val)
     }
 }
@@ -74,22 +71,27 @@ impl std::error::Error for WatchError {}
 
 pub enum Message {
     Cancel,
-    WatchNew(PathBuf),
+    WatchNew(PathBuf, String),
 }
 
 pub async fn watch_directory(
     directory: &Path,
+    disk_name: &str,
     mut incoming: Receiver<Message>,
     conn_pool: Pool,
 ) -> Result<(), WatchError> {
     let mut current_dir = directory.to_path_buf();
+    let mut current_disk = disk_name.to_string();
     loop {
         tokio::select! {
             res = incoming.recv() => {
                 if let Some(msg) = res {
                     match msg {
                         Message::Cancel => return Ok(()),
-                        Message::WatchNew(path) => current_dir = path
+                        Message::WatchNew(path, disk) => {
+                            current_dir = path;
+                            current_disk = disk;
+                        }
                     }
                 } else {
                     return Err(WatchError::ClosedChannel)
@@ -97,20 +99,23 @@ pub async fn watch_directory(
             }
 
             _ = tokio::time::sleep(time::Duration::from_secs(WAIT_TIME)) => {
-                    let status = check_directory(&current_dir)?;
+                    let status = check_directory(&current_dir, &current_disk)?;
                     write_to_database(&conn_pool, status).await?;
             }
         }
     }
 }
 
-fn check_directory(directory: &Path) -> Result<DirectoryStatus, WatchError> {
+fn check_directory(directory: &Path, disk_name: &str) -> Result<MachineStatus, WatchError> {
     let disks = Disks::new_with_refreshed_list();
     let mut disk_total = 0;
     let mut avail_total = 0;
     for disk in disks.iter() {
-        disk_total += disk.total_space();
-        avail_total += disk.available_space();
+        if disk.name() == disk_name {
+            disk_total += disk.total_space();
+            avail_total += disk.available_space();
+            break;
+        }
     }
 
     if !directory.is_dir() {
@@ -132,8 +137,9 @@ fn check_directory(directory: &Path) -> Result<DirectoryStatus, WatchError> {
         }
     }
 
-    Ok(DirectoryStatus {
+    Ok(MachineStatus {
         id: 1,
+        disk: String::from(disk_name),
         path: String::from(directory.to_string_lossy()),
         dir_bytes: (used_size as f64) * 1.0e-9,
         bytes_avail: (avail_total as f64) * 1.0e-9,
@@ -142,12 +148,40 @@ fn check_directory(directory: &Path) -> Result<DirectoryStatus, WatchError> {
     })
 }
 
-async fn write_to_database(conn_pool: &Pool, stat: DirectoryStatus) -> Result<(), WatchError> {
+async fn write_to_database(conn_pool: &Pool, stat: MachineStatus) -> Result<(), WatchError> {
     use super::schema::status::dsl::*;
     use diesel::prelude::*;
     let connection = conn_pool.get().await?;
     let _ = connection
-        .interact(|conn| diesel::update(status).set(stat).execute(conn))
+        .interact(move |conn| diesel::update(status).set(&stat).execute(conn))
+        .await?;
+    Ok(())
+}
+
+pub async fn initialize_database_value(conn_pool: &Pool) -> Result<(), WatchError> {
+    use super::schema::status::dsl::*;
+    use diesel::prelude::*;
+
+    let stat = MachineStatus {
+        id: 1,
+        disk: String::from(""),
+        path: String::from(""),
+        dir_bytes: 0.0,
+        total_bytes: 0.0,
+        bytes_avail: 0.0,
+        n_files: 1,
+    };
+
+    let connection = conn_pool.get().await?;
+    let _ = connection
+        .interact(move |conn| {
+            diesel::insert_into(status)
+                .values(&stat)
+                .on_conflict(id)
+                .do_update()
+                .set(&stat)
+                .execute(conn)
+        })
         .await?;
     Ok(())
 }

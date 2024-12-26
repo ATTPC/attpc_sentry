@@ -1,4 +1,4 @@
-use super::models::DirectoryStatus;
+use super::models::MachineStatus;
 use super::schema::status::dsl::*;
 
 use super::sentry::Message;
@@ -15,12 +15,13 @@ pub struct AppState {
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectoryChange {
+    disk: String,
     directory: String,
 }
 
 pub async fn get_status(
     State(app): State<AppState>,
-) -> Result<Json<DirectoryStatus>, (StatusCode, String)> {
+) -> Result<Json<MachineStatus>, (StatusCode, String)> {
     let conn = match app.conn_pool.get().await {
         Ok(c) => c,
         Err(e) => return Err(internal_error(e)),
@@ -29,7 +30,7 @@ pub async fn get_status(
         .interact(|conn| {
             status
                 .filter(id.eq(1))
-                .select(DirectoryStatus::as_select())
+                .select(MachineStatus::as_select())
                 .load(conn)
         })
         .await
@@ -52,7 +53,10 @@ pub async fn set_directory(
     Json(directory): Json<DirectoryChange>,
 ) -> Result<(), (StatusCode, String)> {
     app.sentry_tx
-        .send(Message::WatchNew(PathBuf::from(directory.directory)))
+        .send(Message::WatchNew(
+            PathBuf::from(directory.directory),
+            directory.disk,
+        ))
         .await
         .map_err(internal_error)?;
     Ok(())

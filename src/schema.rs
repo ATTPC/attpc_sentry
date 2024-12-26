@@ -3,6 +3,7 @@
 diesel::table! {
     status (id) {
         id -> Integer,
+        disk -> Text,
         path -> Text,
         dir_bytes -> Double,
         bytes_avail -> Double,
