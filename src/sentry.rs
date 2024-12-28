@@ -3,10 +3,15 @@ use std::path::PathBuf;
 use sysinfo::Disks;
 use tokio::fs::read_dir;
 
+const CONFIG_PATH: &str = "/Users/attpc/configs";
+const BACKUP_CONFIG_PATH: &str = "/Users/attpc/configs_backup";
+const COBO_DESC: &str = "describe-cobo";
+
 #[derive(Debug)]
 pub enum SentryError {
     NotDirectory(PathBuf),
     CatAlreadyExists(PathBuf, i32),
+    BckAlreadyExists(PathBuf, i32),
     BadIO(std::io::Error),
 }
 
@@ -27,6 +32,10 @@ impl std::fmt::Display for SentryError {
             Self::CatAlreadyExists(path, run) => write!(
                 f,
                 "Sentry tried to catalogue run {run} but directory {path:?} already exists"
+            ),
+            Self::BckAlreadyExists(path, run) => write!(
+                f,
+                "Sentry tried to backup config files for {run} but directory {path:?} already exists"
             ),
         }
     }
@@ -111,4 +120,56 @@ pub async fn catalogue_run(config: SentryConfig) -> Result<SentryResponse, Sentr
     }
 
     check_status(config).await
+}
+
+pub async fn backup_configs(config: SentryConfig) -> Result<SentryResponse, SentryError> {
+    let config_dir = PathBuf::from(CONFIG_PATH);
+    let config_cobo_dir = config_dir.join(COBO_DESC);
+    let bck_config_dir = PathBuf::from(BACKUP_CONFIG_PATH).join(format!(
+        "{}/run_{:04}",
+        config.experiment, config.run_number
+    ));
+    let bck_cobo_dir = bck_config_dir.join(COBO_DESC);
+
+    if bck_config_dir.exists() {
+        return Err(SentryError::BckAlreadyExists(
+            bck_config_dir,
+            config.run_number,
+        ));
+    }
+    tokio::fs::create_dir_all(&bck_cobo_dir).await?;
+
+    let prep_name = format!("prepare-{}.xcfg", config.experiment);
+    let desc_name = format!("describe-{}.xcfg", config.experiment);
+    let conf_name = format!("configure-{}.xcfg", config.experiment);
+
+    tokio::fs::copy(config_dir.join(&prep_name), bck_config_dir.join(&prep_name)).await?;
+    tokio::fs::copy(config_dir.join(&desc_name), bck_config_dir.join(&desc_name)).await?;
+    tokio::fs::copy(config_dir.join(&conf_name), bck_config_dir.join(&conf_name)).await?;
+
+    let mut reader = read_dir(config_cobo_dir).await?;
+    loop {
+        match reader.next_entry().await? {
+            Some(entry) => {
+                let path = entry.path();
+                if path.is_file() {
+                    tokio::fs::copy(
+                        &path,
+                        bck_cobo_dir.join(path.file_name().expect("File doesn't have file name?")),
+                    )
+                    .await?;
+                }
+            }
+            None => break,
+        }
+    }
+
+    Ok(SentryResponse {
+        disk: String::from("Macintosh HD"),
+        path: String::from(bck_config_dir.to_string_lossy()),
+        path_gb: 0.0,
+        path_n_files: 3,
+        disk_avail_gb: 0.0,
+        disk_total_gb: 0.0,
+    })
 }

@@ -20,9 +20,13 @@ This will build and run the attpc_sentry program.
 
 ## Server API
 
-The sentry server has two endpoints, `/status` and `/catalogue`. `/status` will query the status of 
-a path and disk to return the associated disk usage statistics. `/catalogue` will move the DAQ
-run datafiles to a run-specific location. To use each endpoint POST the following JSON:
+The sentry server has three endpoints
+
+- `/status`: query the status of a directory and disk
+- `/catalogue`: move the DAQ run datafiles to a run-specific location
+- `/backup`: backup the DAQ .xcfg configuration files 
+
+To use each endpoint POST the following JSON:
 
 ```json
 {
@@ -35,9 +39,12 @@ run datafiles to a run-specific location. To use each endpoint POST the followin
 
 `disk` is the name of the disk (for AT-TPC typically this is "Macintosh HD"), `path` is the path
 to which the DAQ writes data, `experiment` is the unqiue experiment name (something like "e22508"),
-and `run_number` is the current run number.
+and `run_number` is the current run number. *Note*: `/backup` has slightly different behavior to
+the others. The only fields that are used are `experiment` and `run_number`; the path and disk
+are automatically set to match the expected AT-TPC workstation configuration.
 
-Both endpoints return the status as the following JSON:
+
+All endpoints return the status as the following JSON:
 
 ```json
 {
@@ -52,3 +59,5 @@ Both endpoints return the status as the following JSON:
 
 `disk` and `path` mirror the input JSON. `path_gb` is the total GB stored in files at `path`. 
 `disk_total_gb` is the total GB in `disk`. `disk_avail_gb` is the unused GB on `disk`. `path_n_files` is the number of files at `path`.
+*Note*: Again, `/backup` is slightly different. The `disk` and `path` reflect the expected AT-TPC configuration
+and no size information is provided. The number of files from `/backup` should always be 3.
