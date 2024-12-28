@@ -1,5 +1,5 @@
 use super::data::{SentryConfig, SentryResponse};
-use super::sentry::{backup_configs, catalogue_run, check_status};
+use super::sentry::{backup_configs, catalog_run, check_status};
 use axum::{http::StatusCode, Json};
 
 pub async fn status(
@@ -9,10 +9,10 @@ pub async fn status(
     Ok(Json(response))
 }
 
-pub async fn catalogue(
+pub async fn catalog(
     Json(config): Json<SentryConfig>,
 ) -> Result<Json<SentryResponse>, (StatusCode, String)> {
-    let response = catalogue_run(config).await.map_err(internal_error)?;
+    let response = catalog_run(config).await.map_err(internal_error)?;
     Ok(Json(response))
 }
 

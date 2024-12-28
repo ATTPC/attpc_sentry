@@ -23,7 +23,7 @@ This will build and run the attpc_sentry program.
 The sentry server has three endpoints
 
 - `/status`: query the status of a directory and disk
-- `/catalogue`: move the DAQ run datafiles to a run-specific location
+- `/catalog`: move the DAQ run datafiles to a run-specific location
 - `/backup`: backup the DAQ .xcfg configuration files 
 
 To use each endpoint POST the following JSON:

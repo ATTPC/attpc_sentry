@@ -31,7 +31,7 @@ impl std::fmt::Display for SentryError {
             Self::BadIO(e) => write!(f, "Sentry was not able to communicate with the disk: {e}"),
             Self::CatAlreadyExists(path, run) => write!(
                 f,
-                "Sentry tried to catalogue run {run} but directory {path:?} already exists"
+                "Sentry tried to catalog run {run} but directory {path:?} already exists"
             ),
             Self::BckAlreadyExists(path, run) => write!(
                 f,
@@ -87,7 +87,7 @@ pub async fn check_status(config: SentryConfig) -> Result<SentryResponse, Sentry
     })
 }
 
-pub async fn catalogue_run(config: SentryConfig) -> Result<SentryResponse, SentryError> {
+pub async fn catalog_run(config: SentryConfig) -> Result<SentryResponse, SentryError> {
     let daq_dir = PathBuf::from(&config.path);
     let cat_dir = daq_dir.join(format!(
         "{}/run_{:04}",

@@ -20,7 +20,7 @@ async fn main() {
     tracing::info!("Starting the sentry server...");
     let router = Router::new()
         .route("/status", post(server::status))
-        .route("/catalogue", post(server::catalogue))
+        .route("/catalog", post(server::catalog))
         .route("/backup", post(server::backup));
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
