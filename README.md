@@ -22,42 +22,67 @@ This will build and run the attpc_sentry program.
 
 The sentry server has three endpoints
 
-- `/status`: query the status of a directory and disk
+- `/status`: query the status of data on the workstation 
 - `/catalog`: move the DAQ run datafiles to a run-specific location
 - `/backup`: backup the DAQ .xcfg configuration files 
-
-To use each endpoint POST the following JSON:
-
-```json
-{
-    "disk": "some_disk",
-    "path": "/some/path",
-    "experiment": "experiment",
-    "run_number": 0
-}
-```
-
-`disk` is the name of the disk (for AT-TPC typically this is "Macintosh HD"), `path` is the path
-to which the DAQ writes data, `experiment` is the unqiue experiment name (something like "e22508"),
-and `run_number` is the current run number. *Note*: `/backup` has slightly different behavior to
-the others. The only fields that are used are `experiment` and `run_number`; the path and disk
-are automatically set to match the expected AT-TPC workstation configuration.
-
 
 All endpoints return the status as the following JSON:
 
 ```json
 {
     "disk": "some_disk",
-    "path": "/some/path/",
-    "path_gb": 0.0,
-    "path_n_files": 0,
+    "process": "some_process",
+    "data_path": "/some/path/",
+    "data_written_gb": 0.0,
+    "data_path_files": 0,
     "disk_avail_gb": 0.0,
     "disk_total_gb": 0.0
 }
 ```
 
-`disk` and `path` mirror the input JSON. `path_gb` is the total GB stored in files at `path`. 
-`disk_total_gb` is the total GB in `disk`. `disk_avail_gb` is the unused GB on `disk`. `path_n_files` is the number of files at `path`.
-*Note*: Again, `/backup` is slightly different. The `disk` and `path` reflect the expected AT-TPC configuration
-and no size information is provided. The number of files from `/backup` should always be 3.
+
+### Status Route
+
+The status route checks the status of the dataRouter/DataExporter
+process, the amount of data written (since last check). This route
+is accessed using an HTTP GET request.
+
+### Catalog Route
+
+This route moves DAQ data files to a experiment/run specific location
+This route is accessed using HTTP POST request with the following
+JSON data
+
+```json
+{
+    "experiment": "some_experiment",
+    "run_number": 0,
+}
+```
+
+### Backup Route
+
+This route moves DAQ configuration files to a experiment/run specific location
+This route is accessed using HTTP POST request with the following
+JSON data
+
+```json
+{
+    "experiment": "some_experiment",
+    "run_number": 0,
+}
+```
+
+## Environment variables
+
+The following variables should be defined in a `.env` file at the location
+from which attpc_sentry should be run.
+
+```bash
+DISK_NAME="Macintosh HD"
+DATA_PATH="/Users/attpc/Data"
+PROCESS_NAME="dataRouter"
+CONFIG_PATH="/Users/attpc/configs/"
+CONFIG_BACKUP_PATH="/Users/attpc/configs_backup/"
+```
+

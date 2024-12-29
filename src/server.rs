@@ -1,25 +1,29 @@
-use super::data::{SentryConfig, SentryResponse};
+use super::data::{SentryParameters, SentryResponse, SentryState};
 use super::sentry::{backup_configs, catalog_run, check_status};
-use axum::{http::StatusCode, Json};
+use axum::{extract::State, http::StatusCode, Json};
 
 pub async fn status(
-    Json(config): Json<SentryConfig>,
+    State(state): State<SentryState>,
 ) -> Result<Json<SentryResponse>, (StatusCode, String)> {
-    let response = check_status(config).await.map_err(internal_error)?;
+    let response = check_status(&state).await.map_err(internal_error)?;
     Ok(Json(response))
 }
 
 pub async fn catalog(
-    Json(config): Json<SentryConfig>,
+    State(state): State<SentryState>,
+    Json(config): Json<SentryParameters>,
 ) -> Result<Json<SentryResponse>, (StatusCode, String)> {
-    let response = catalog_run(config).await.map_err(internal_error)?;
+    let response = catalog_run(&state, config).await.map_err(internal_error)?;
     Ok(Json(response))
 }
 
 pub async fn backup(
-    Json(config): Json<SentryConfig>,
+    State(state): State<SentryState>,
+    Json(config): Json<SentryParameters>,
 ) -> Result<Json<SentryResponse>, (StatusCode, String)> {
-    let response = backup_configs(config).await.map_err(internal_error)?;
+    let response = backup_configs(&state, config)
+        .await
+        .map_err(internal_error)?;
     Ok(Json(response))
 }
 
