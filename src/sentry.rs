@@ -69,17 +69,12 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
 
     let mut n_files = 0;
     let mut reader = read_dir(&state.data_path).await?;
-    loop {
-        match reader.next_entry().await? {
-            Some(entry) => {
-                let path = entry.path();
-                if path.is_dir() {
-                    continue;
-                }
-                n_files += 1;
-            }
-            None => break,
+    while let Some(entry) = reader.next_entry().await? {
+        let path = entry.path();
+        if path.is_dir() {
+            continue;
         }
+        n_files += 1;
     }
 
     Ok(SentryResponse {
@@ -108,22 +103,14 @@ pub async fn catalog_run(
     tokio::fs::create_dir_all(&cat_dir).await?;
 
     let mut reader = read_dir(&state.data_path).await?;
-    loop {
-        match reader.next_entry().await? {
-            Some(entry) => {
-                let path = entry.path();
-                match path.extension() {
-                    Some(ext) => {
-                        if path.is_file() && ext == "graw" {
-                            let new_path = cat_dir
-                                .join(path.file_name().expect("File doesn't have file name?!"));
-                            tokio::fs::rename(path, new_path).await?;
-                        }
-                    }
-                    None => continue,
-                }
+    while let Some(entry) = reader.next_entry().await? {
+        let path = entry.path();
+        if let Some(ext) = path.extension() {
+            if path.is_file() && ext == "graw" {
+                let new_path =
+                    cat_dir.join(path.file_name().expect("File doesn't have file name?!"));
+                tokio::fs::rename(path, new_path).await?;
             }
-            None => break,
         }
     }
 
@@ -170,19 +157,14 @@ pub async fn backup_configs(
     .await?;
 
     let mut reader = read_dir(config_cobo_dir).await?;
-    loop {
-        match reader.next_entry().await? {
-            Some(entry) => {
-                let path = entry.path();
-                if path.is_file() {
-                    tokio::fs::copy(
-                        &path,
-                        bck_cobo_dir.join(path.file_name().expect("File doesn't have file name?")),
-                    )
-                    .await?;
-                }
-            }
-            None => break,
+    while let Some(entry) = reader.next_entry().await? {
+        let path = entry.path();
+        if path.is_file() {
+            tokio::fs::copy(
+                &path,
+                bck_cobo_dir.join(path.file_name().expect("File doesn't have file name?")),
+            )
+            .await?;
         }
     }
 
