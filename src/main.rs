@@ -1,3 +1,7 @@
+//!
+#![doc = include_str!("../README.md")]
+//!
+
 mod data;
 mod sentry;
 mod server;
@@ -10,8 +14,12 @@ use data::SentryState;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
+/// The application entry ppint
+/// We use a multithreaded tokio runtime, defaulting to 3 worker threads. Paths and
+/// other configuration details are loaded from a .env file
 #[tokio::main(flavor = "multi_thread", worker_threads = 3)]
 async fn main() {
+    // logging setup
     let subscriber = tracing_subscriber::fmt()
         .compact()
         .with_file(true)
@@ -22,6 +30,7 @@ async fn main() {
     tracing::subscriber::set_global_default(subscriber)
         .expect("Could not initialize the tracing system!");
 
+    // Load env variables
     match dotenvy::dotenv() {
         Ok(path) => tracing::info!("Loaded environment from {path:?}"),
         Err(e) => {
@@ -29,7 +38,7 @@ async fn main() {
             return;
         }
     }
-
+    // Put vars in the state
     let state = SentryState {
         disk_name: std::env::var("DISK_NAME").expect("DISK_NAME was not loaded from .env file!"),
         data_path: PathBuf::from(
@@ -46,6 +55,7 @@ async fn main() {
             .expect("PROCESS_NAME was not loaded from .env file!"),
     };
 
+    // Setup the server
     tracing::info!("Starting the sentry server...");
     let router = Router::new()
         .route("/status", get(server::status))
@@ -53,6 +63,7 @@ async fn main() {
         .route("/backup", post(server::backup))
         .with_state(state);
 
+    // Setup the server listener
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     tracing::info!("Listening on 0.0.0.0:8080");
     let listener = match tokio::net::TcpListener::bind(addr).await {
@@ -63,6 +74,7 @@ async fn main() {
         }
     };
 
+    // Serve it
     match axum::serve(listener, router)
         .with_graceful_shutdown(shutdown_signal())
         .await
@@ -75,6 +87,9 @@ async fn main() {
     }
 }
 
+/// This is a simple handler for various shutdown signals that the program could
+/// receive, such as ctrl-c or SIGTERM. This is used with our server to handle
+/// graceful shutdown.
 async fn shutdown_signal() {
     let ctrl_c_sig = async {
         tokio::signal::ctrl_c()

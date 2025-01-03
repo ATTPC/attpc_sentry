@@ -1,7 +1,10 @@
+/// These are thin wrappers directing the axum routes to the appropriate sentry
+/// actions
 use super::data::{SentryParameters, SentryResponse, SentryState};
 use super::sentry::{backup_configs, catalog_run, check_status};
 use axum::{extract::State, http::StatusCode, Json};
 
+/// Direct the /status route to the check_status function
 pub async fn status(
     State(state): State<SentryState>,
 ) -> Result<Json<SentryResponse>, (StatusCode, String)> {
@@ -9,6 +12,7 @@ pub async fn status(
     Ok(Json(response))
 }
 
+/// Direct the /catalog route to the catalog_run function
 pub async fn catalog(
     State(state): State<SentryState>,
     Json(config): Json<SentryParameters>,
@@ -17,6 +21,7 @@ pub async fn catalog(
     Ok(Json(response))
 }
 
+/// Direct the /backup route to the backup_run function
 pub async fn backup(
     State(state): State<SentryState>,
     Json(config): Json<SentryParameters>,
@@ -27,6 +32,7 @@ pub async fn backup(
     Ok(Json(response))
 }
 
+/// Wrap a sentry error into something that axum can report
 fn internal_error<E>(err: E) -> (StatusCode, String)
 where
     E: std::error::Error,

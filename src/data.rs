@@ -1,6 +1,10 @@
+//! Module of all of the data structures used in the application
+
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// This is the state of the sentry app, containing all the paths and names that the
+/// server needs to run
 #[derive(Debug, Clone)]
 pub struct SentryState {
     pub data_path: PathBuf,
@@ -10,12 +14,15 @@ pub struct SentryState {
     pub disk_name: String,
 }
 
+/// These are external parameters that the sentry needs for some specific operations
+/// like moving or backing up files
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SentryParameters {
     pub experiment: String,
     pub run_number: i32,
 }
 
+/// This is the data returned by the sentry after running an operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SentryResponse {
     pub disk: String,

@@ -1,10 +1,14 @@
+//! Contains all of the functions to be run on the server
+//! This is the actual "sentry" part
 use super::data::{SentryParameters, SentryResponse, SentryState};
 use std::path::PathBuf;
 use sysinfo::{Disks, ProcessRefreshKind, RefreshKind, System};
 use tokio::fs::read_dir;
 
+/// A special string used in the AT-TPC filesystem
 const COBO_DESC: &str = "describe-cobo";
 
+/// All the errors the sentry can run into
 #[derive(Debug)]
 pub enum SentryError {
     NotDirectory(PathBuf),
@@ -43,6 +47,10 @@ impl std::fmt::Display for SentryError {
 
 impl std::error::Error for SentryError {}
 
+/// Check the status of the AT-TPC DAQ process and the workstation
+/// Uses the [sysinfo](https://docs.rs/sysinfo/latest/sysinfo/) crate to examine the
+/// status of the workstation disk and a DAQ process (typically dataRouter or friends)
+/// and return a SentryResponse
 pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryError> {
     let disks = Disks::new_with_refreshed_list();
     let mut disk_total = 0;
@@ -88,6 +96,12 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
     })
 }
 
+/// Move the DAQ runfiles (the acutal data) to a safe place
+/// By default the AT-TPC DAQ does not create data runs. It just stores all of its data
+/// in timestamped files at a single directory. This is not ideal as it can be difficult
+/// to identify which file corresponds to which run. This function creates a run
+/// directory and moves the .graw files to the run directory. It then returns a response
+/// after checking the status.
 pub async fn catalog_run(
     state: &SentryState,
     params: SentryParameters,
@@ -117,6 +131,10 @@ pub async fn catalog_run(
     check_status(state).await
 }
 
+/// Backup the .xcfg files used by the DAQ
+/// For safety, we backup the CoBo and MuTaNT config files per run. This helps make sure
+/// that we always know what configuration was used for a given run. It then checks the
+/// status and returns a response
 pub async fn backup_configs(
     state: &SentryState,
     params: SentryParameters,
@@ -168,13 +186,5 @@ pub async fn backup_configs(
         }
     }
 
-    Ok(SentryResponse {
-        disk: state.disk_name.clone(),
-        process: state.process_name.clone(),
-        data_path: String::from(state.data_path.to_string_lossy()),
-        data_written_gb: 0.0,
-        disk_avail_gb: 0.0,
-        disk_total_gb: 0.0,
-        data_path_files: 0,
-    })
+    check_status(state).await
 }
