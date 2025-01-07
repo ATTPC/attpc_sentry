@@ -1,4 +1,5 @@
 # attpc_sentry
+![CI](https://github.com/ATTPC/attpc_sentry/actions/workflows/ci.yml/badge.svg)
 
 A HTTP server to monitor the status of the AT-TPC DAQ workstations and
 organize run datafiles.
