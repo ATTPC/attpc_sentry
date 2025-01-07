@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>attpc.sentry</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/attpc/Documents/GetScripts/mmStartSentry.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/attpc/Documents/attpc_sentry</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/attpc/Library/Logs/attpc_sentry.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/attpc/Library/Logs/attpc_sentry.log</string>
+
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>

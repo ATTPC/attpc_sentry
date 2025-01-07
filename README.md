@@ -86,3 +86,9 @@ CONFIG_PATH="/Users/attpc/configs/"
 CONFIG_BACKUP_PATH="/Users/attpc/configs_backup/"
 ```
 
+## Extra scripts
+
+Also included in the repo are two scripts: `attpc.sentry.plist` and `mmStartSentry.sh`
+These are used in the AT-TPC DAQ workstations to autostart the sentry with the other 
+DAQ tools. Generally they won't need modified.
+
