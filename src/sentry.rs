@@ -204,5 +204,5 @@ fn get_pid_old_macos(process_name: &str) -> usize {
             return entries[0].parse().expect("PID was not a number?");
         }
     }
-    return 0;
+    0
 }
