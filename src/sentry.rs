@@ -81,7 +81,7 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
     let mut reader = read_dir(&state.data_path).await?;
     while let Some(entry) = reader.next_entry().await? {
         let path = entry.path();
-        if path.is_dir() {
+        if path.is_dir() || path.extension().is_none_or(|ex| ex != ".graw") {
             continue;
         }
         n_files += 1;
