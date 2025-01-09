@@ -2,7 +2,8 @@
 //! This is the actual "sentry" part
 use super::data::{SentryParameters, SentryResponse, SentryState};
 use std::path::PathBuf;
-use sysinfo::{Disks, ProcessRefreshKind, RefreshKind, System};
+use std::process::Command;
+use sysinfo::{Disks, Pid, ProcessRefreshKind, RefreshKind, System};
 use tokio::fs::read_dir;
 
 /// A special string used in the AT-TPC filesystem
@@ -63,10 +64,11 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
         }
     }
 
+    let pid = get_pid_old_macos(&state.process_name);
     let sys = System::new_with_specifics(
         RefreshKind::nothing().with_processes(ProcessRefreshKind::everything()),
     );
-    let proc = match sys.processes_by_name(state.process_name.as_ref()).next() {
+    let proc = match sys.process(Pid::from(pid)) {
         Some(p) => p,
         None => return Err(SentryError::NoProcess(state.process_name.clone())),
     };
@@ -187,4 +189,20 @@ pub async fn backup_configs(
     }
 
     check_status(state).await
+}
+
+fn get_pid_old_macos(process_name: &str) -> usize {
+    let procs = Command::new("ps")
+        .arg("-e")
+        .output()
+        .expect("We don't have the ps command?");
+
+    let output = String::from_utf8(procs.stdout).expect("Output isn't utf8?");
+    for line in output.lines() {
+        let entries: Vec<&str> = line.split_whitespace().collect();
+        if entries[3] == process_name {
+            return entries[0].parse().expect("PID was not a number?");
+        }
+    }
+    return 0;
 }
