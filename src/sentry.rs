@@ -191,6 +191,9 @@ pub async fn backup_configs(
     check_status(state).await
 }
 
+/// This is a janky hack. For some reason, when starting processes using the
+/// "AT-TPC method" (launchctl + shell script) the processes lose a lot of information
+/// to sysinfo. This hack uses ps and essentially grep to find the process id.
 fn get_pid_old_macos(process_name: &str) -> usize {
     let procs = Command::new("ps")
         .arg("-e")
