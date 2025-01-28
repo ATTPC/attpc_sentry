@@ -81,8 +81,8 @@ from which attpc_sentry should be run.
 
 ```bash
 DISK_NAME="Macintosh HD"
-DATA_PATH="/Users/attpc/Data"
-PROCESS_NAME="dataRouter"
+DATA_PATH="/Users/attpc/Data/mm#"
+PROCESS_NAME="DataExporter"
 CONFIG_PATH="/Users/attpc/configs/"
 CONFIG_BACKUP_PATH="/Users/attpc/configs_backup/"
 ```
