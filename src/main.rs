@@ -60,7 +60,6 @@ async fn main() {
     let router = Router::new()
         .route("/status", get(server::status))
         .route("/catalog", post(server::catalog))
-        .route("/backup", post(server::backup))
         .with_state(state);
 
     // Setup the server listener

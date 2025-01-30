@@ -133,64 +133,6 @@ pub async fn catalog_run(
     check_status(state).await
 }
 
-/// Backup the .xcfg files used by the DAQ
-/// For safety, we backup the CoBo and MuTaNT config files per run. This helps make sure
-/// that we always know what configuration was used for a given run. It then checks the
-/// status and returns a response
-pub async fn backup_configs(
-    state: &SentryState,
-    params: SentryParameters,
-) -> Result<SentryResponse, SentryError> {
-    let config_cobo_dir = state.config_path.join(COBO_DESC);
-    let bck_config_dir = state.config_bck_path.join(format!(
-        "{}/run_{:04}",
-        params.experiment, params.run_number
-    ));
-    let bck_cobo_dir = bck_config_dir.join(COBO_DESC);
-
-    if bck_config_dir.exists() {
-        return Err(SentryError::BckAlreadyExists(
-            bck_config_dir,
-            params.run_number,
-        ));
-    }
-    tokio::fs::create_dir_all(&bck_cobo_dir).await?;
-
-    let prep_name = format!("prepare-{}.xcfg", params.experiment);
-    let desc_name = format!("describe-{}.xcfg", params.experiment);
-    let conf_name = format!("configure-{}.xcfg", params.experiment);
-
-    tokio::fs::copy(
-        state.config_path.join(&prep_name),
-        bck_config_dir.join(&prep_name),
-    )
-    .await?;
-    tokio::fs::copy(
-        state.config_path.join(&desc_name),
-        bck_config_dir.join(&desc_name),
-    )
-    .await?;
-    tokio::fs::copy(
-        state.config_path.join(&conf_name),
-        bck_config_dir.join(&conf_name),
-    )
-    .await?;
-
-    let mut reader = read_dir(config_cobo_dir).await?;
-    while let Some(entry) = reader.next_entry().await? {
-        let path = entry.path();
-        if path.is_file() {
-            tokio::fs::copy(
-                &path,
-                bck_cobo_dir.join(path.file_name().expect("File doesn't have file name?")),
-            )
-            .await?;
-        }
-    }
-
-    check_status(state).await
-}
-
 /// This is a janky hack. For some reason, when starting processes using the
 /// "AT-TPC method" (launchctl + shell script) the processes lose a lot of information
 /// to sysinfo. This hack uses ps and essentially grep to find the process id.
