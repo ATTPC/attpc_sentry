@@ -44,13 +44,6 @@ async fn main() {
         data_path: PathBuf::from(
             std::env::var("DATA_PATH").expect("DATA_PATH was not loaded from .env file!"),
         ),
-        config_path: PathBuf::from(
-            std::env::var("CONFIG_PATH").expect("CONFIG_PATH was not loaded from .env file!"),
-        ),
-        config_bck_path: PathBuf::from(
-            std::env::var("CONFIG_BACKUP_PATH")
-                .expect("CONFIG_BACKUP_PATH was not loaded from .env file!"),
-        ),
         process_name: std::env::var("PROCESS_NAME")
             .expect("PROCESS_NAME was not loaded from .env file!"),
     };

@@ -25,7 +25,6 @@ The sentry server has three endpoints
 
 - `/status`: query the status of data on the workstation 
 - `/catalog`: move the DAQ run datafiles to a run-specific location
-- `/backup`: backup the DAQ .xcfg configuration files 
 
 All endpoints return the status as the following JSON:
 
@@ -61,19 +60,6 @@ JSON data
 }
 ```
 
-### Backup Route
-
-This route moves DAQ configuration files to a experiment/run specific location
-This route is accessed using HTTP POST request with the following
-JSON data
-
-```json
-{
-    "experiment": "some_experiment",
-    "run_number": 0,
-}
-```
-
 ## Environment variables
 
 The following variables should be defined in a `.env` file at the location
@@ -83,8 +69,6 @@ from which attpc_sentry should be run.
 DISK_NAME="Macintosh HD"
 DATA_PATH="/Users/attpc/Data/mm#"
 PROCESS_NAME="DataExporter"
-CONFIG_PATH="/Users/attpc/configs/"
-CONFIG_BACKUP_PATH="/Users/attpc/configs_backup/"
 ```
 
 ## Extra scripts

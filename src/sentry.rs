@@ -6,16 +6,12 @@ use std::process::Command;
 use sysinfo::{Disks, Pid, ProcessRefreshKind, RefreshKind, System};
 use tokio::fs::read_dir;
 
-/// A special string used in the AT-TPC filesystem
-const COBO_DESC: &str = "describe-cobo";
-
 /// All the errors the sentry can run into
 #[derive(Debug)]
 pub enum SentryError {
     NotDirectory(PathBuf),
     NoProcess(String),
     CatAlreadyExists(PathBuf, i32),
-    BckAlreadyExists(PathBuf, i32),
     BadIO(std::io::Error),
 }
 
@@ -37,11 +33,7 @@ impl std::fmt::Display for SentryError {
                 f,
                 "Sentry tried to catalog run {run} but directory {path:?} already exists"
             ),
-            Self::BckAlreadyExists(path, run) => write!(
-                f,
-                "Sentry tried to backup config files for {run} but directory {path:?} already exists"
-            ),
-            Self::NoProcess(name) => write!(f, "Sentry could not find a process with name {name}")
+            Self::NoProcess(name) => write!(f, "Sentry could not find a process with name {name}"),
         }
     }
 }

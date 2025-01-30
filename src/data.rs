@@ -8,8 +8,6 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub struct SentryState {
     pub data_path: PathBuf,
-    pub config_path: PathBuf,
-    pub config_bck_path: PathBuf,
     pub process_name: String,
     pub disk_name: String,
 }
