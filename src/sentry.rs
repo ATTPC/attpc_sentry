@@ -83,7 +83,7 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
         disk: state.disk_name.clone(),
         process: state.process_name.clone(),
         data_path: String::from(state.data_path.to_string_lossy()),
-        data_written_gb: (proc.disk_usage().written_bytes as f64) * 1.0e-9,
+        data_written_gb: (proc.disk_usage().total_written_bytes as f64) * 1.0e-9,
         disk_avail_gb: (avail_total as f64) * 1.0e-9,
         disk_total_gb: (disk_total as f64) * 1.0e-9,
         data_path_files: n_files,
