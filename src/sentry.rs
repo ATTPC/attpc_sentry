@@ -60,8 +60,8 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
     let sys = System::new_with_specifics(
         RefreshKind::nothing().with_processes(ProcessRefreshKind::everything()),
     );
-    let proc = match sys.process(Pid::from(pid)) {
-        Some(p) => p,
+    match sys.process(Pid::from(pid)) {
+        Some(_) => (),
         None => return Err(SentryError::NoProcess(state.process_name.clone())),
     };
 
@@ -71,11 +71,13 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
 
     let mut n_files = 0;
     let mut reader = read_dir(&state.data_path).await?;
+    let mut bytes_count = 0;
     while let Some(entry) = reader.next_entry().await? {
         let path = entry.path();
         if path.is_dir() || path.extension().is_none_or(|ex| ex != ".graw") {
             continue;
         }
+        bytes_count += path.metadata()?.len();
         n_files += 1;
     }
 
@@ -83,7 +85,7 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
         disk: state.disk_name.clone(),
         process: state.process_name.clone(),
         data_path: String::from(state.data_path.to_string_lossy()),
-        data_written_gb: (proc.disk_usage().total_written_bytes as f64) * 1.0e-9,
+        data_written_gb: (bytes_count as f64) * 1.0e-9,
         disk_avail_gb: (avail_total as f64) * 1.0e-9,
         disk_total_gb: (disk_total as f64) * 1.0e-9,
         data_path_files: n_files,
