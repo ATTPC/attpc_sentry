@@ -17,6 +17,11 @@ pub async fn catalog(
     State(state): State<SentryState>,
     Json(config): Json<SentryParameters>,
 ) -> Result<Json<SentryResponse>, (StatusCode, String)> {
+    // Crazy little issue... when taking a lot of data, someone in the ECCServer
+    // DataRouter system buffers some data. When we issue stop to a run, there is
+    // NO guarantee that all data has already been written to disk. Here I've added
+    // a manual sleep for 30s to hope that files have been completely written...
+    tokio::time::sleep(std::time::Duration::from_secs(30)).await;
     let response = catalog_run(&state, config).await.map_err(internal_error)?;
     Ok(Json(response))
 }
