@@ -74,7 +74,7 @@ pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryE
     let mut bytes_count = 0;
     while let Some(entry) = reader.next_entry().await? {
         let path = entry.path();
-        if path.is_dir() || path.extension().is_none_or(|ex| ex != ".graw") {
+        if path.is_dir() || path.extension().is_none_or(|ex| ex != "graw") {
             continue;
         }
         bytes_count += path.metadata()?.len();
