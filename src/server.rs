@@ -21,7 +21,7 @@ pub async fn catalog(
     // DataRouter system buffers some data. When we issue stop to a run, there is
     // NO guarantee that all data has already been written to disk. Here I've added
     // a manual sleep for 30s to hope that files have been completely written...
-    tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+    tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
     let response = catalog_run(&state, config).await.map_err(internal_error)?;
     Ok(Json(response))
 }
