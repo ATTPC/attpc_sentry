@@ -3,7 +3,7 @@
 use super::data::{SentryParameters, SentryResponse, SentryState};
 use std::path::PathBuf;
 use std::process::Command;
-use sysinfo::{Disks, Pid, ProcessRefreshKind, RefreshKind, System};
+use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
 use tokio::fs::read_dir;
 
 /// All the errors the sentry can run into
@@ -45,15 +45,12 @@ impl std::error::Error for SentryError {}
 /// status of the workstation disk and a DAQ process (typically dataRouter or friends)
 /// and return a SentryResponse
 pub async fn check_status(state: &SentryState) -> Result<SentryResponse, SentryError> {
-    let disks = Disks::new_with_refreshed_list();
     let mut disk_total = 0;
     let mut avail_total = 0;
-    for disk in disks.iter() {
-        if *disk.name() == *state.disk_name {
-            disk_total += disk.total_space();
-            avail_total += disk.available_space();
-            break;
-        }
+
+    if let Ok(disk_info) = whichdisk::resolve(state.data_path.clone()) {
+        disk_total = disk_info.total_bytes();
+        avail_total = disk_info.available_bytes();
     }
 
     let pid = get_pid_old_macos(&state.process_name);
